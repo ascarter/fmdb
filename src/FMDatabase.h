@@ -19,7 +19,10 @@
 
 
 + (id)databaseWithPath:(NSString*)inPath;
++ (id)databaseInMemory;
+
 - (id)initWithPath:(NSString*)inPath;
+- (id)initWithInMemory;
 
 - (BOOL)open;
 #if SQLITE_VERSION_NUMBER >= 3005000

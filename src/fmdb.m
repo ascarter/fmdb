@@ -7,6 +7,59 @@
 int main (int argc, const char * argv[]) {
     NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
     
+    // In-memory database
+    NSLog(@"Testing in memory database");
+    FMDatabase *inMemoryDb = [FMDatabase databaseInMemory];
+    if (![inMemoryDb open]) {
+        NSLog(@"Could not open in memory db.");
+        [pool release];
+        return 0;
+    }
+    
+    // Create a table
+    [inMemoryDb executeUpdate:@"create table test (a text, b text, c integer, d double, e double)"];
+    if ([inMemoryDb hadError]) {
+        NSLog(@"Err %d: %@", [inMemoryDb lastErrorCode], [inMemoryDb lastErrorMessage]);
+        return 0;
+    }
+    
+    // Add some rows
+    [inMemoryDb beginTransaction];
+    int idx = 0;
+    for (idx; idx < 20; idx++) {
+        [inMemoryDb executeUpdate:@"insert into test (a, b, c, d, e) values (?, ?, ?, ?, ?)" ,
+         @"hi",
+         [NSString stringWithFormat:@"number %d", idx],
+         [NSNumber numberWithInt:idx],
+         [NSDate date],
+         [NSNumber numberWithFloat:2.2f]];
+    }
+    [inMemoryDb commit];
+    
+    // Select rows
+    FMResultSet *rsInMemory = [inMemoryDb executeQuery:@"select rowid,* from test where a = ?", @"hi"];
+    while ([rsInMemory next]) {
+        // Print out what we've got in a number of formats.
+        NSLog(@"%d %@ %@ %@ %@ %f %f",
+              [rsInMemory intForColumn:@"c"],
+              [rsInMemory stringForColumn:@"b"],
+              [rsInMemory stringForColumn:@"a"],
+              [rsInMemory stringForColumn:@"rowid"],
+              [rsInMemory dateForColumn:@"d"],
+              [rsInMemory doubleForColumn:@"d"],
+              [rsInMemory doubleForColumn:@"e"]);
+                
+        if (!([[rsInMemory columnNameForIndex:0] isEqualToString:@"rowid"] &&
+              [[rsInMemory columnNameForIndex:1] isEqualToString:@"a"])
+            ) {
+            NSLog(@"Error: columnNameForIndex failed");
+            return 7;
+        }
+    }
+    // close the result set and the database
+    [rsInMemory close];  
+    [inMemoryDb close];
+    
     // delete the old db.
     NSFileManager *fileManager = [NSFileManager defaultManager];
     [fileManager removeFileAtPath:@"/tmp/tmp.db" handler:nil];

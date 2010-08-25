@@ -7,6 +7,14 @@
     return [[[self alloc] initWithPath:aPath] autorelease];
 }
 
++ (id)databaseInMemory {
+    return [[[self alloc] initWithInMemory] autorelease];
+}
+
+- (id)initWithInMemory {
+    return [self initWithPath:@":memory:"];
+}
+
 - (id)initWithPath:(NSString*)aPath {
     self = [super init];
 	
@@ -43,6 +51,10 @@
 }
 
 - (BOOL)open {
+    if (traceExecution) {
+        NSLog(@"Opening %s", [databasePath fileSystemRepresentation]);
+    }
+    
 	int err = sqlite3_open([databasePath fileSystemRepresentation], &db );
 	if(err != SQLITE_OK) {
         NSLog(@"error opening!: %d", err);
