@@ -16,6 +16,16 @@ int main (int argc, const char * argv[]) {
         return 0;
     }
     
+    // Verify the db is in memory. File should be empty.
+    FMResultSet *rsDatabases = [inMemoryDb executeQuery:@"PRAGMA database_list"];
+    while ([rsDatabases next]) {
+        NSLog(@"seq = %d name = %@ file = [%@]",
+              [rsDatabases intForColumn:@"seq"], 
+              [rsDatabases stringForColumn:@"name"], 
+              [rsDatabases stringForColumn:@"file"]);
+    }
+    [rsDatabases close];
+    
     // Create a table
     [inMemoryDb executeUpdate:@"create table test (a text, b text, c integer, d double, e double)"];
     if ([inMemoryDb hadError]) {
@@ -70,7 +80,7 @@ int main (int argc, const char * argv[]) {
         [pool release];
         return 0;
     }
-    
+
     // kind of experimentalish.
     [db setShouldCacheStatements:YES];
     
